@@ -1,0 +1,12 @@
+
+<!-- Overrides base admin template. See: /oncall/OnCallSystem/settings for linking details-->
+
+{% extends "admin/base.html" %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}">GCS OnCall System - Admin</a></h1>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}
