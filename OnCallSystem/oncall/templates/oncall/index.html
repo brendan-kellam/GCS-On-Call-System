@@ -1,11 +1,40 @@
-{% if latest_question_list %}
-    <ul>
-    {% for question in latest_question_list %}
-    
-    	<!-- Gets the url detail from /oncall/urls.py and links it to question.id -->
-        <li><a href="{% url 'oncall:detail' question.id %}">{{ question.question_text }}</a></li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>No polls are available.</p>
-{% endif %}
+
+<head>
+	 
+
+</head>
+
+<body>
+	Logged in as: <b>{{ user.username }}</b>
+	<a href="{{urls.logout}}">logout</a>
+	
+	{% if user_list %}
+	    <ul>
+	    {% for user in user_list %}
+	    
+	    	<!-- Gets the url detail from /oncall/urls.py and links it to teacher.id -->
+	        <!-- <li><a href="/polls/{{ teacher.id }}/">{{ teacher.first_name }}</a></li> -->
+
+	        
+	        <li>{{user.first_name}} {{user.last_name}}</li>
+
+	        <!-- Reference specific url pointer -->
+	       	
+
+	    {% endfor %}
+	    </ul>
+	{% else %}
+	    <p>No Teachers  are available.</p>
+	{% endif %}
+
+	<form method="post">
+    	{% csrf_token %}
+   		{{ form|linebreaksbr }}
+    	
+    	<input type="submit" value="Submit" />
+	</form>
+
+
+
+</body>
+

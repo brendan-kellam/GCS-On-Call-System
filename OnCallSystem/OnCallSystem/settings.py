@@ -29,6 +29,8 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
+#NOTE: Use of the package "annoying django"
+#see: https://github.com/skorokithakis/django-annoying
 
 INSTALLED_APPS = (
     'django.contrib.admin',
@@ -37,6 +39,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'annoying',
     'oncall',
 )
 
@@ -91,6 +94,7 @@ DATABASES = {
 
 LANGUAGE_CODE = 'en-us'
 
+#NOTE TIMEZONE SET TO EST
 TIME_ZONE = 'EST'
 
 USE_I18N = True
@@ -104,3 +108,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
 STATIC_URL = '/static/'
+LOGIN_URL = '/oncall/login/'
+
+#Email config:
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST_USER = 'brendan.kellam@greenwoodcollege.com'
+EMAIL_HOST_PASSWORD = '1234abcdbk'
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+
+
+

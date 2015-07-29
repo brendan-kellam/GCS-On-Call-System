@@ -1,2 +1,4 @@
 eclipse.preferences.version=1
 encoding//oncall/migrations/0001_initial.py=utf-8
+encoding//oncall/migrations/0007_auto_20150719_1401.py=utf-8
+encoding//oncall/migrations/0015_auto_20150727_2014.py=utf-8
