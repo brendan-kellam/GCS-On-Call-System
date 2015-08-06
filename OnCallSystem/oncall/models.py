@@ -2,6 +2,8 @@ import datetime
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
+from django.contrib.auth.forms import UserCreationForm
+
 
 # Create your models here.
 
@@ -88,6 +90,11 @@ class OncallRequest(models.Model):
     def __str__(self):
         return str(self.date)
     
+class MyUserCreationForm(UserCreationForm):
 
+    def __init__(self, *args, **kwargs):
+        super(MyUserCreationForm, self).__init__(*args, **kwargs)
+
+        self.fields['email'].required = True
         
     

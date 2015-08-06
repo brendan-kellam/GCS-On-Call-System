@@ -1,5 +1,6 @@
 from .models import Choice, Question, Teacher, Slot, Course, Period, OncallRequest
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import models as admin_models
 from django.shortcuts import get_object_or_404, render
 from django.contrib.auth import logout as logout_auth
 from django.contrib.auth import login as login_auth
@@ -8,7 +9,6 @@ from django.http import HttpResponseRedirect
 from django.contrib.auth.models import User
 from django.template import RequestContext
 from django.core.mail import send_mail
-from django.core.mail import mail_admins
 from django.shortcuts import redirect
 from django.http import HttpResponse
 from .forms import OnCallForm
@@ -26,36 +26,54 @@ urls = {
         "logout" : "/oncall/logout/",
         }
    
-   
-def email_members(request_teacher, coverage_teacher, date, 
+#sends confirmed oncall request's data to required patrons.
+#Accepts: all information relating to oncall request
+def email_members(request_user, coverage_user, date, 
                   week_id, period, course, slot, description):
     
+    #set the subject line
     subject = "Oncall request: " + str(date)
     
+    #set the message
+    message = "A oncall request has been generated with the following information:"    
+    message += "\n Date: " + str(date)
+    message += "\n Week: " + util.week_relation[week_id]
+    message += "\n Day of Week: " + date.strftime("%A")
+    message += "\n Period: " + str(period)
+    message += "\n Course Code: " + str(course)
+    message += "\n Slot: " + str(slot)
+    message += "\n Request Teacher: " + request_user.first_name + " " + request_user.last_name
+    message += "\n Coverage Teacher: " + coverage_user.first_name + " " + coverage_user.last_name
+    message += "\n\nDescription:\n " + description
     
-    message = "A oncall request has been generated with the following information:\n",
-    "Date:", str(date), 
-    "\nWeek:", util.week_relation[week_id],
-    "\nDay of Week:", date.strftime("%A"),
-    "\nPeriod:", str(period),
-    "\nCourse Code:", str(course),
-    "\nSlot:", str(slot),
-    "\nRequest Teacher:", request_teacher.user.first_name, request_teacher.user.last_name,
-    "\nCoverage Teacher:", coverage_teacher.user.first_name, coverage_teacher.user.last_name,
-    "\nDescription:\n",
-    description,
-    "\n\nTHIS IS A TEST EMAIL FOR THE GCS ONCALL SYSTEM. IF YOU GOT HIS ACCEIDENTALLY, PLEASE IGNORE. "
+    #TODO: Remove on completion
+    #--ADD TEST SUBSCRIPT---
+    message += "\n\nTHIS IS A TEST EMAIL FOR THE GCS ONCALL SYSTEM. IF YOU GOT HIS ACCEIDENTALLY, PLEASE IGNORE."
     
-    notified_admins = util.get_notified_admin_email_list()
-     
-    send_mail(subject, message, None, list(notified_admins), fail_silently=False)  
-         
-    #mail_admins(subject, message, fail_silently=False)
-    #send_mail(subject, message, None, [str(request_teacher.user.email), str(coverage_teacher.user.email)], fail_silently=False)
-    print "COMPLETE"
+    #--EMAIL COVERAGE AND REQUEST TEACHER--
+    #verify and congregate request and coverage user's email
+    email_list = util.get_user_email_list([request_user, coverage_user])
+    print email_list
+    #send system email to request and coverage user's
+    send_mail(subject, message, None, email_list, fail_silently=False)
+    
+    
+    #--ADMIN COPY--
+    #add admin subscript
+    message += "\n\n(admin copy)" 
+    
+    #get the notified admin group (NOTE: This group can be configured on the admin portal)
+    group = admin_models.Group.objects.get(name='Notified_Administrators')
+    notified_admins = util.get_group_email_list(group)
+    
+    #send system email to notified admin's
+    send_mail(subject, message, None, notified_admins, fail_silently=False)
+    
+    print "COMPLETE" #TODO: Remove on completion
 
         
 #returns a instance of the coverage teacher
+
 def generate_coverage_teacher(request_user, oncall_date, slot_obj):
     print slot_obj.slot_id
     
@@ -65,6 +83,12 @@ def generate_coverage_teacher(request_user, oncall_date, slot_obj):
     
     #order the teacher list by the number of oncalls
     teachers = teachers.order_by('oncall_count')
+    
+    #if the requesting teacher is already available,
+    #then a oncall request is not required!
+    if(request_user.teacher in teachers):
+        return False
+
 
     #get the list of oncall's on the date and slot of this request
     oncall_request_list = OncallRequest.objects.filter(
@@ -75,6 +99,7 @@ def generate_coverage_teacher(request_user, oncall_date, slot_obj):
     
     print oncall_request_list
     
+    
     coverage_teacher = None
     
     #loop the available teachers
@@ -84,6 +109,9 @@ def generate_coverage_teacher(request_user, oncall_date, slot_obj):
         
         #checks if the current teacher is the requesting teacher
         if(teacher.user == request_user):
+            
+            print "----HANDLING A TEACHER THAT HAS COVERAGE AT THIS SLOT---"
+            return None
             
             #if so, "continue" loop
             continue
@@ -136,8 +164,8 @@ def generate_oncall(request, form):
     delta_time = oncall_date-now
     
     #check time validity 
-    #NOTE: Oncalls can be filed on the same day of coverage
-    if(delta_time.days < 0):
+    #NOTE: Oncalls cannot be filed on the same day of coverage
+    if(delta_time.days <= 0):
         error = "Date " + str(oncall_date) + " is invalid. Enter date later than: " + str(now)
         form.add_error(None, error)
         return form
@@ -179,6 +207,9 @@ def generate_oncall(request, form):
         form.add_error(None, "Could not find coverage teacher")
         return form
     
+    if(teacher_on_coverage == False):
+        form.add_error(None, "You seem to have this slot free. Please contact IT if this is not the case.")
+        return form
     
     
      
@@ -199,21 +230,25 @@ def generate_oncall(request, form):
             
         #save oncall request to database
         oncall.save() 
+    
     except:
         form.add_error(None, "Unable to create request! Try again later.")
         return form
     
+    #if the request was valid, start a new thread 
+    #process for mailing members
     thread.start_new(
+        #set properties for the thread
         email_members, 
-        (user.teacher, teacher_on_coverage, oncall_date, week_id, period_obj, course_obj, slot_obj, oncall_description)
+        (user, teacher_on_coverage.user, oncall_date, week_id, period_obj, course_obj, slot_obj, oncall_description)
     )
     
+    #return the form
     return form
     
 
 @login_required
 def index(request):
-    
     #get the current user that is signed in
     user = request.user
     

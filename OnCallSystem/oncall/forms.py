@@ -1,6 +1,8 @@
 from django import forms
 from datetime import date
+from django.contrib.auth.models import User
 from .models import Slot, Course, Period
+from django.contrib.auth.forms import UserCreationForm
 import util
 
  
@@ -19,4 +21,9 @@ class OnCallForm(forms.Form):
     slot = forms.ChoiceField(choices=util.SLOT_LIST)
     description = forms.CharField(widget=forms.Textarea)
     
-    
+class MyUserCreationForm(UserCreationForm):
+
+    def __init__(self, *args, **kwargs):
+        super(MyUserCreationForm, self).__init__(*args, **kwargs)
+
+        self.fields['email'].required = True
