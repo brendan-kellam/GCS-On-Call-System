@@ -1,10 +1,8 @@
-import datetime
 from django.db import models
-from django.utils import timezone
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 
-
+"""
 # Create your models here.
 
 class Question(models.Model): #inherits from models.Model
@@ -33,13 +31,14 @@ class Choice(models.Model):
     def __str__(self):
         return self.choice_text
 
-#-----    
+#-----
+"""    
     
 class Period(models.Model):
     period_number = models.IntegerField(default = 1)
     
     def __str__(self):
-        return "Period_" + str(self.period_number)
+        return "Period " + str(self.period_number)
     
 
 class Course(models.Model):
@@ -59,11 +58,6 @@ class Teacher(models.Model):
     #the total number of times a teacher has been ocalled
     oncall_count = models.IntegerField(default = 0)
     
-    #denotes if the teacher is already assigned to a oncall
-    #NOTE: THIS FIELD WILL BE FALSE IF A GIVEN TEACHER HAS REQUESTED A ONCALL
-    #available_for_oncall = models.BooleanField(default=True)
-    
-    
     def __str__(self):
         return self.user.first_name + " " + self.user.last_name
 
@@ -73,7 +67,7 @@ class Slot(models.Model): #https://docs.djangoproject.com/en/1.8/topics/db/examp
     teachers = models.ManyToManyField(Teacher)
     
     def __str__(self):
-        out = "Slot_" + str(self.slot_id)
+        out = "Slot " + str(self.slot_id)
         return out
 
 class OncallRequest(models.Model):
@@ -86,6 +80,7 @@ class OncallRequest(models.Model):
     coverage_teacher = models.ForeignKey(Teacher, related_name="coverage_teacher")
     description = models.CharField(max_length=500)
     has_been_recived = models.BooleanField(default=False)
+    expired = models.BooleanField(default=False)
     
     def __str__(self):
         return str(self.date)

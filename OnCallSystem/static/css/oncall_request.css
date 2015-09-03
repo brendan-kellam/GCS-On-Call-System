@@ -1,0 +1,39 @@
+body{
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+.form-horizontal {
+  max-width: 700px;
+  padding: 15px;
+  margin: 0 auto;
+}
+
+.form-horizontal-heading{
+  font-style: normal;
+  padding-bottom: 10px;
+}
+
+.form-horizontal {
+  font-weight: normal;
+}
+.form-horizontal {
+  position: relative;
+  height: auto;
+  -webkit-box-sizing: border-box;
+     -moz-box-sizing: border-box;
+          box-sizing: border-box;
+  padding: 10px;
+  font-size: 14px;
+}
+.form-horizontal {
+  z-index: 2;
+}
+
+.error-message {
+  color:red;
+}
+
+.submit-button {
+  margin-top: 12px;
+}

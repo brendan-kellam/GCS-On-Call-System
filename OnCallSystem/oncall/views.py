@@ -1,4 +1,4 @@
-from .models import Choice, Question, Teacher, Slot, Course, Period, OncallRequest
+from .models import Teacher, Slot, Course, Period, OncallRequest
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import models as admin_models
 from django.shortcuts import get_object_or_404, render
@@ -7,24 +7,32 @@ from django.contrib.auth import login as login_auth
 from django.contrib.auth import authenticate
 from django.http import HttpResponseRedirect
 from django.contrib.auth.models import User
-from django.template import RequestContext
 from django.core.mail import send_mail
-from django.shortcuts import redirect
-from django.http import HttpResponse
 from .forms import OnCallForm
 from .forms import LoginForm
 from datetime import date
 import thread
-import calendar
 import time
 from . import util
+from django.db.models.signals import post_save
 
 #context association for each url
 urls = {
         "index" : "/oncall/",
+        "oncall_request" : "/oncall/oncall_request/",
+        "oncall_success" : "/oncall/oncall_request/success/",
         "login" : "/oncall/login/",
         "logout" : "/oncall/logout/",
         }
+
+@login_required
+def oncall_success(request):
+    
+    context = {
+     'urls': urls,
+    }
+    
+    return render(request, 'oncall/oncall_success.html', context)
    
 #sends confirmed oncall request's data to required patrons.
 #Accepts: all information relating to oncall request
@@ -48,12 +56,12 @@ def email_members(request_user, coverage_user, date,
     
     #TODO: Remove on completion
     #--ADD TEST SUBSCRIPT---
-    message += "\n\nTHIS IS A TEST EMAIL FOR THE GCS ONCALL SYSTEM. IF YOU GOT HIS ACCEIDENTALLY, PLEASE IGNORE."
+    message += "\n\nTHIS IS A TEST EMAIL FOR THE GCS ONCALL SYSTEM. IF YOU GOT THIS ACCEDENTLY, PLEASE IGNORE."
     
     #--EMAIL COVERAGE AND REQUEST TEACHER--
     #verify and congregate request and coverage user's email
     email_list = util.get_user_email_list([request_user, coverage_user])
-    print email_list
+
     #send system email to request and coverage user's
     send_mail(subject, message, None, email_list, fail_silently=False)
     
@@ -74,9 +82,7 @@ def email_members(request_user, coverage_user, date,
         
 #returns a instance of the coverage teacher
 
-def generate_coverage_teacher(request_user, oncall_date, slot_obj):
-    print slot_obj.slot_id
-    
+def generate_coverage_teacher(request_user, oncall_date, slot_obj):    
         
     #get the teachers available for oncall on this specific slot
     teachers = slot_obj.teachers.all()
@@ -95,6 +101,8 @@ def generate_coverage_teacher(request_user, oncall_date, slot_obj):
         slot=slot_obj
     ).filter(
         date=oncall_date
+    ).filter(
+        expired=False
     )
     
     print oncall_request_list
@@ -147,6 +155,7 @@ def generate_coverage_teacher(request_user, oncall_date, slot_obj):
  
 #generates a new oncall request
 
+@login_required
 def generate_oncall(request, form):
     
     #get the current user
@@ -168,7 +177,7 @@ def generate_oncall(request, form):
     if(delta_time.days <= 0):
         error = "Date " + str(oncall_date) + " is invalid. Enter date later than: " + str(now)
         form.add_error(None, error)
-        return form
+        return form, False
         
                 
     #get the week id (I.E: Week A/ Week B)
@@ -195,7 +204,7 @@ def generate_oncall(request, form):
     #check if the description fits database constraints
     if(len(oncall_description) > 500):
         form.add_error(None, "Description exceeds 500 characters!")
-        return form
+        return form, False
     
     
     #generate a new coverage teacher.
@@ -205,11 +214,11 @@ def generate_oncall(request, form):
     #if a coverage teacher could not be generated
     if(teacher_on_coverage == None):
         form.add_error(None, "Could not find coverage teacher")
-        return form
+        return form, False
     
     if(teacher_on_coverage == False):
         form.add_error(None, "You seem to have this slot free. Please contact IT if this is not the case.")
-        return form
+        return form, False
     
     
      
@@ -225,7 +234,8 @@ def generate_oncall(request, form):
             request_teacher=user.teacher,
             coverage_teacher=teacher_on_coverage,
             description=oncall_description,
-            has_been_recived=False
+            has_been_recived=False,
+            expired=False
         )
             
         #save oncall request to database
@@ -233,7 +243,7 @@ def generate_oncall(request, form):
     
     except:
         form.add_error(None, "Unable to create request! Try again later.")
-        return form
+        return form, False
     
     #if the request was valid, start a new thread 
     #process for mailing members
@@ -243,17 +253,13 @@ def generate_oncall(request, form):
         (user, teacher_on_coverage.user, oncall_date, week_id, period_obj, course_obj, slot_obj, oncall_description)
     )
     
-    #return the form
-    return form
-    
+    return form, True
 
-@login_required
-def index(request):
+
+@login_required  
+def oncall_request(request):
     #get the current user that is signed in
     user = request.user
-    
-    #get all teachers in the db
-    user_list = User.objects.all()
     
     if request.method == 'POST':
         
@@ -264,8 +270,10 @@ def index(request):
         if form.is_valid():
             
             #generate a new oncall request
-            form = generate_oncall(request, form)            
-                
+            form, success = generate_oncall(request, form)            
+            
+            if(success):
+                return HttpResponseRedirect(urls["oncall_success"])
     else:
         form = OnCallForm()
         
@@ -273,9 +281,21 @@ def index(request):
     #dictionary association for the html file
     context = {
     'user': user,
-    'user_list': user_list,
     'urls': urls,
     'form': form,
+    'get_object_or_404' : get_object_or_404,
+    'request' : OncallRequest,
+    }
+    
+    
+    return render(request, 'oncall/oncall_request.html', context)
+
+@login_required
+def index(request):
+
+    #dictionary association for the html file
+    context = {
+    'urls': urls,
     }
     
     
@@ -284,6 +304,10 @@ def index(request):
 def login(request):
     
     print "Request Type:", request.method
+    
+    #if the user is already loged in
+    if request.user.is_authenticated():
+        return HttpResponseRedirect(urls["index"])
     
     #given a POST request
     if request.method == 'POST':
@@ -342,73 +366,16 @@ def login(request):
 def logout(request):
     logout_auth(request)
     return HttpResponseRedirect(urls["login"])
+
+
+#handle creating a Teacher instance when a corresponding User instance is created
+#Note: This code is creating post_save (I.E after a user is created)
+def on_user_creation(sender, instance, created, **kwargs):
     
-
-    """
-    username = request.POST['username']
-    password = request.POST['password']
-    user = authenticate(username=username, password=password)
+    #if a user is created, create a new Teacher instance
+    if created:
+        Teacher.objects.create(user=instance)
+   
+#handle post_save connection
+post_save.connect(on_user_creation, sender=User, dispatch_uid="create_teacher_instance")
     
-    if user is not None:
-        if user.is_active:
-            login(request, user)
-            print "sucsess!"
-        else:
-            print "Inactive account!"
-        
-    else:
-        print "Invalid Login!"
-    """
-
-
-
-"""
-class IndexView(generic.ListView):
-    
-    template_name = 'oncall/index.html'
-    context_object_name = 'latest_question_list'
-
-    def get_queryset(self):
-        ""Return the last five published questions.""
-        return Question.objects.order_by('-pub_date')[:5]
-
-
-class DetailView(generic.DetailView):
-    model = Question
-    template_name = 'oncall/detail.html'
-
-
-class ResultsView(generic.DetailView):
-    model = Question
-    template_name = 'oncall/results.html'
-    
-
-def vote(request, question_id):
-    p = get_object_or_404(Question, pk=question_id)
-    
-    t = Test()
-    t.test()
-    
-    try:
-        
-        #get the selected 
-        selected_choice = p.choice_set.get(pk=request.POST['choice'])
-        print "Choice:", selected_choice;
-        
-    except (KeyError, Choice.DoesNotExist):
-        # Redisplay the question voting form.
-        return render(request, 'oncall/detail.html', {
-            'question': p, 
-            'error_message': "You didn't select a choice.",
-        })
-    else:
-        selected_choice.votes += 1
-        selected_choice.save()
-        # Always return an HttpResponseRedirect after successfully dealing
-        # with POST data. This prevents data from being posted twice if a
-        # user hits the Back button.
-        
-        #redirect to results page
-        return HttpResponseRedirect(reverse('oncall:results', args=(p.id,)))
-
-    """

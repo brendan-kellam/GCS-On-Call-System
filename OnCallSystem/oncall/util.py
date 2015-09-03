@@ -1,6 +1,4 @@
 from .models import Slot, Course, Period
-from django.contrib.auth import models as admin_models
-from django.core.mail import send_mail
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 
@@ -8,13 +6,10 @@ from django.core.exceptions import ValidationError
 
 #---VARS: 
 #create a new week relationship
-week_relation = ["WEEK A", "WEEK B"]
+week_relation = ["Week A", "Week B"]
 
 #create a table of weeks
 days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-
-error_list = {0 : "Email validation error. A issue occured while attempting to email: %s"}
-
 
 #---UTILITIES
 
@@ -30,20 +25,9 @@ def is_email_valid(email):
     except ValidationError:
         return False
 
-#TODO: Remove unused    
-def mail_technical_error(error_number, inserts):
-    group = admin_models.Group.objects.get(name='System_Administrators')
-    
-    email_list = get_user_email_list(group)
-    
-    subject = "Error #: " + str(error_number) + " detected"
-    message = error_list[error_number] % tuple(inserts)
-    
-    send_mail(subject, message, None, email_list, fail_silently=False)
 
 #returns every user's email in a given GROUP
 #Accepts: a group. Returns: list of email addresses (Acii format)
-
 def get_group_email_list(group):
     
     #get the user email list by passing in the group user list
@@ -73,6 +57,25 @@ def get_user_email_list(users):
     #return the list
     return email_list
 
+#generate the widget attributes given a class and name
+def get_attrs(_class, name):
+    
+    #convert the name to a title (IE capitalize first letter)
+    title = str(name.capitalize())
+    
+    #create id (example: inputUsername)
+    ident = "input" + title
+    
+    #attributes
+    attrs = {
+        "class" : _class,
+        "id" : ident,
+        "placeholder" : title, 
+        "type" : str(name)
+    }
+    
+    return attrs
+    
 
 #Formats a given list into a ChoiceField format
 def format_choice(data):

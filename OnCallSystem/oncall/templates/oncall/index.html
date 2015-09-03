@@ -1,40 +1,45 @@
 
 <head>
-	 
+	<meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+
+	{% load staticfiles %}	 
+	<link href="{% static "css/bootstrap-theme.min.css" %}" rel="stylesheet">
+	<link href="{% static "css/bootstrap.min.css" %}" rel="stylesheet">
+	<script type="text/javascript" src="{% static "js/bootstrap.min.js" %}"></script>
+	<link href="{% static "images/main_icon.ico" %}" rel="icon">
+	<link href="{% static "css/index.css" %}" rel="stylesheet">
+
+	<title>Oncall</title>
 </head>
 
 <body>
-	Logged in as: <b>{{ user.username }}</b>
-	<a href="{{urls.logout}}">logout</a>
-	
-	{% if user_list %}
-	    <ul>
-	    {% for user in user_list %}
-	    
-	    	<!-- Gets the url detail from /oncall/urls.py and links it to teacher.id -->
-	        <!-- <li><a href="/polls/{{ teacher.id }}/">{{ teacher.first_name }}</a></li> -->
+	<div class="container">
 
-	        
-	        <li>{{user.first_name}} {{user.last_name}}</li>
+		<div class="row">
+            <div class="col-md-4">
+	                <a href="{{urls.logout}}" class="thumbnail">
 
-	        <!-- Reference specific url pointer -->
-	       	
+	                    <img src="{% static "images/logout_thumbnail.png" %}">
+	                </a>
+                <center><h4 class="thumbnail-title">Logout</h4>
+            </div>
 
-	    {% endfor %}
-	    </ul>
-	{% else %}
-	    <p>No Teachers  are available.</p>
-	{% endif %}
+            <div class="col-md-4">
+                <a href="{{urls.oncall_request}}" class="thumbnail">
+                    <img src="{% static "images/request_thumbnail.png" %}">
+                </a>
+                <center><h4 class="thumbnail-title">Make a Request</h4>
+            </div>
 
-	<form method="post">
-    	{% csrf_token %}
-   		{{ form|linebreaksbr }}
-    	
-    	<input type="submit" value="Submit" />
-	</form>
-
-
-
+            <div class="col-md-4">
+                <a href="http://groodle.greenwoodcollege.com" class="thumbnail">
+                    <img src="{% static "images/website_thumbnail.png" %}">
+                </a>
+                <center><h4 class="thumbnail-title">Groodle</h4>
+            </div>
+        </div>
 </body>
 

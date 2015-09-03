@@ -14,6 +14,7 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PROJECT_DIR=os.path.dirname(__file__)
 
 
 # Quick-start development settings - unsuitable for production
@@ -29,7 +30,6 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
-#NOTE: Use of the package "annoying django"
 #see: https://github.com/skorokithakis/django-annoying
 
 INSTALLED_APPS = (
@@ -39,7 +39,6 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'annoying',
     'oncall',
 )
 
@@ -77,7 +76,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'OnCallSystem.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 
@@ -104,10 +102,17 @@ USE_L10N = True
 USE_TZ = True
 
 
+
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
+STATIC_ROOT = os.path.join(PROJECT_DIR, 'static')
 STATIC_URL = '/static/'
+STATICFILES_DIRS = (
+    ('assets', '/Users/poptart/Documents/python/GCS-On-Call-System/OnCallSystem/static')
+)
+
 LOGIN_URL = '/oncall/login/'
 
 #Email config:

@@ -1,0 +1,293 @@
+{% extends "admin/base_site.html" %}
+
+
+{% load i18n admin_static %}
+{% load model_access %}
+
+{% block extrastyle %}{{ block.super }}
+
+<link rel="stylesheet" type="text/css" href="{% static "admin/css/dashboard.css" %}" />
+<link href="{% static "images/main_icon.ico" %}" rel="icon">
+
+{{ media }}
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type="text/javascript" src="{% static "js/highcharts.js" %}"></script>
+
+<script>
+
+    $(document).ready(function() {
+        $("#custom_date").submit(function() {
+            event.preventDefault(); // <-- add this
+            $this = $(this);
+
+            var start_date = $('#start_date').val();
+            var end_date = $('#end_date').val();
+            var url = $this.attr('action') + '?custom_time=' + start_date + ',' + end_date;
+
+            window.location.href = url;
+       
+        });
+    });
+
+
+    function exportToCsv(file, filename, rows) {
+        var processRow = function (row) {
+            var finalVal = '';
+            for (var j = 0; j < row.length; j++) {
+                var innerValue = row[j] === null ? '' : row[j].toString();
+                if (row[j] instanceof Date) {
+                    innerValue = row[j].toLocaleString();
+                };
+                var result = innerValue.replace(/"/g, '""');
+                if (result.search(/("|,|\n)/g) >= 0)
+                    result = '"' + result + '"';
+                if (j > 0)
+                    finalVal += ',';
+                finalVal += result;
+            }
+            return finalVal + '\n';
+        };
+
+        var csvFile = file;
+        for (var i = 0; i < rows.length; i++) {
+            csvFile += processRow(rows[i]);
+        }
+
+        var blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' });
+        if (navigator.msSaveBlob) { // IE 10+
+            navigator.msSaveBlob(blob, filename);
+        } else {
+            var link = document.createElement("a");
+            if (link.download !== undefined) { // feature detection
+                // Browsers that support HTML5 download attribute
+                var url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+    }
+
+    
+    function ConvertToCSV(objArray) {
+        var array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
+        var str = '';
+
+        //var outer = [];
+        for (var i = 0; i < array.length; i++) {
+
+            //associative array for data
+            current = array[i];
+
+            //create empty line
+            var line = '';
+
+            //create temporary key storage
+            var keys = new Array();
+
+            //add to temp array
+            for (var k in current) {
+                keys.unshift(k);
+            }
+
+            var inner = [];
+            //loop temp, effectivly allowing for a backwards lookup
+            for (var c = keys.length, n = 0; n < c; n++) {
+                if (line != '') line += ',';
+                line += current[keys[n]];
+            }
+            
+            //append the line to the overall string
+            str += line + '\r\n';
+        }
+
+        return str;
+    }
+    
+
+    //get the oncall count data
+    {% get_oncall_count_data as data %}
+
+
+    //convert to a javascript varible
+    var data = {{ data|safe }};
+
+    //build graph
+    $(function () { 
+        $('#graph').highcharts({
+            chart: {
+                renderTo: 'container',
+                type: 'column'
+            },
+            title: {
+                text: 'Oncall Request Data'
+            },
+            xAxis: {
+                type: 'category', 
+                title: {
+                    text: 'Teacher'
+                }
+            },
+            yAxis: {
+                title: {
+                    text: 'Oncall Count'
+                },
+                tickInterval: 1
+            },
+            legend: {
+                enabled: false
+            },  
+            plotOptions: {
+                series: {
+                    borderWidth: 0
+                }
+            },
+
+            series: [{
+                name: "Teachers",
+                colorByPoint: true,
+                data: data
+            }]
+        });
+    });
+
+    //save csv data
+    function saveCsv(){
+        var jsonObject = JSON.stringify(data);
+        var csvData = ConvertToCSV(jsonObject);
+
+        //export the
+        exportToCsv(csvData, "file", 0);
+     }
+
+
+</script>
+
+{% endblock %}
+
+{% block coltype %}colMS{% endblock %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+
+{% block breadcrumbs %}{% endblock %}
+
+
+
+
+
+{% block content %}
+
+<div id="content-main">
+
+	{% if app_list %}
+    	{% for app in app_list %}
+        	<div class="app-{{ app.app_label }} module">
+        	<table>
+        	<caption>
+            	<a href="{{ app.app_url }}" class="section" title="{% blocktrans with name=app.name %}Models in the {{ name }} application{% endblocktrans %}">{{ app.name }}</a>
+        	</caption>
+        	{% for model in app.models %}
+          	  <tr class="model-{{ model.object_name|lower }}">
+          	  {% if model.admin_url %}
+         	       <th scope="row"><a href="{{ model.admin_url }}">{{ model.name }}</a></th>
+         	   {% else %}
+         	       <th scope="row">{{ model.name }}</th>
+         	   {% endif %}
+	
+        	    {% if model.add_url %}
+        	        <td><a href="{{ model.add_url }}" class="addlink">{% trans 'Add' %}</a></td>
+        	    {% else %}
+        	        <td>&nbsp;</td>
+        	    {% endif %}
+
+        	    {% if model.admin_url %}
+         	       <td><a href="{{ model.admin_url }}" class="changelink">{% trans 'Change' %}</a></td>
+        	    {% else %}
+        	        <td>&nbsp;</td>
+        	    {% endif %}
+        	    </tr>
+      	  {% endfor %}
+      	  </table>
+          </div>
+    	{% endfor %}
+	{% else %}
+    	<p>{% trans "You don't have permission to edit anything." %}</p>
+	{% endif %}
+    <div id="graph" style="width:100%; height:400px;"></div>
+
+</div>
+{% endblock %}
+
+{% block sidebar %}
+
+<div id="content-related">
+    <div class="module" id="recent-actions-module">
+
+        <h2>{% trans 'Recent Actions' %}</h2>
+        <h3>{% trans 'My Actions' %}</h3>
+            {% load log %}
+            {% get_admin_log 10 as admin_log for_user user %}
+            {% if not admin_log %}
+            <p>{% trans 'None available' %}</p>
+            {% else %}
+            <ul class="actionlist">
+            {% for entry in admin_log %}
+            <li class="{% if entry.is_addition %}addlink{% endif %}{% if entry.is_change %}changelink{% endif %}{% if entry.is_deletion %}deletelink{% endif %}">
+                {% if entry.is_deletion or not entry.get_admin_url %}
+                    {{ entry.object_repr }}
+                {% else %}
+                    <a href="{{ entry.get_admin_url }}">{{ entry.object_repr }}</a>
+                {% endif %}
+                <br/>
+                {% if entry.content_type %}
+                    <span class="mini quiet">{% filter capfirst %}{{ entry.content_type }}{% endfilter %}</span>
+                {% else %}
+                    <span class="mini quiet">{% trans 'Unknown content' %}</span>
+                {% endif %}
+            </li>
+            {% endfor %}
+            </ul>
+            {% endif %}
+    </div>
+    <br><br>
+    
+
+    <a href="/admin/?time=any">Any Time</a><br>
+    <a href="/admin/?time=today">Today</a><br>
+    <a href="/admin/?time=week">Past 7 Days</a><br>
+    <a href="/admin/?time=month">Past 30 Days</a><br>
+    <a href="/admin/?time=year">Past Year</a><br>
+
+<!--
+    <br><ceneter>Custom:<br>
+    start: <input type="date"><br>
+    end: <input type="date"><br>
+
+    <button type="button" id="submit_custom">Submit</button>
+-->
+    <br>Custom:
+    <form action="/admin/" method="GET" id="custom_date">
+        start: <input type="date" id="start_date"><br>
+        end: <input type="date" id="end_date"><br>
+        <button type="submit" id="submit_custom">Submit</button>
+    </form>
+
+    <br>
+    <button type="submit" id="save" onclick="saveCsv();">Export</button>
+
+</div>
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
