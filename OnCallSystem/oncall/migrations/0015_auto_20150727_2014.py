@@ -15,11 +15,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='oncallrequest',
             name='coverage_teacher',
-            field=models.OneToOneField(related_name='coverage_teacher', default=uuid.uuid4, to='oncall.Teacher'),
+            field=models.OneToOneField(related_name='coverage_teacher', default=None, to='oncall.Teacher'),
         ),
         migrations.AlterField(
             model_name='oncallrequest',
             name='request_teacher',
-            field=models.OneToOneField(related_name='request_teacher', default=uuid.uuid4, to='oncall.Teacher'),
+            field=models.OneToOneField(related_name='request_teacher', default=None, to='oncall.Teacher'),
         ),
     ]
