@@ -3,6 +3,7 @@ Built By: Brendan Kellam
 Contact At: bshizzle1234@gmail.com
 github repository: https://github.com/brendan-kellam/GCS-On-Call-System
 Build: Windows v1.0
+Server: Mysql
 
 Django settings for OnCallSystem project v 1.0
 
