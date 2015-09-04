@@ -1,7 +1,8 @@
-""" 
+"""
 Built By: Brendan Kellam
 Contact At: bshizzle1234@gmail.com
 github repository: https://github.com/brendan-kellam/GCS-On-Call-System
+Build: Windows v1.0
 
 Django settings for OnCallSystem project v 1.0
 
@@ -63,10 +64,10 @@ ROOT_URLCONF = 'OnCallSystem.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        
+
         #add a new templates directory
         'DIRS': [os.path.join(BASE_DIR, 'templates')],
-        
+
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -127,6 +128,3 @@ EMAIL_HOST_PASSWORD = '1234abcdbk'
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-
-
-
