@@ -2,11 +2,8 @@
 Built By: Brendan Kellam
 Contact At: bshizzle1234@gmail.com
 github repository: https://github.com/brendan-kellam/GCS-On-Call-System
-<<<<<<< HEAD
-Build: Mac osx v1.0
-Server: sqlite3
-=======
-Build: Windows v1.0
+
+Build: Unix v1.0
 Server: mysql
 >>>>>>> windowsBuild
 
@@ -127,7 +124,9 @@ USE_TZ = True
 
 STATIC_ROOT = os.path.join(PROJECT_DIR, 'static')
 STATIC_URL = '/static/'
-STATICFILES_DIRS = ( os.path.join('static'), )
+STATICFILES_DIRS = (
+    ('assets', 'ADD STATIC DIR HERE!')
+)
 
 LOGIN_URL = '/oncall/login/'
 
