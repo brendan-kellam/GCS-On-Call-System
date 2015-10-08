@@ -18,10 +18,9 @@ from django.contrib import admin
 
 #ROUTING
 urlpatterns = [
-               
+
 
     #add a new url link to the oncall app, with the namespace oncall
-    url(r'^admin_tools/', include('admin_tools.urls')),
     url(r'^oncall/', include('oncall.urls', namespace="oncall")),
     url(r'^admin/', include(admin.site.urls)),
 ]

@@ -2,8 +2,13 @@
 Built By: Brendan Kellam
 Contact At: bshizzle1234@gmail.com
 github repository: https://github.com/brendan-kellam/GCS-On-Call-System
+<<<<<<< HEAD
 Build: Mac osx v1.0
 Server: sqlite3
+=======
+Build: Windows v1.0
+Server: mysql
+>>>>>>> windowsBuild
 
 Django settings for OnCallSystem project v 1.0
 
@@ -31,7 +36,7 @@ PROJECT_DIR=os.path.dirname(__file__)
 SECRET_KEY = 'a0$l@j9+x)shz$=otf_!4^k1ljvi5c&oi%$=i@8(t_%@s^7p*7'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = True #TODO: Change out of debug
 
 ALLOWED_HOSTS = []
 
@@ -86,12 +91,18 @@ WSGI_APPLICATION = 'OnCallSystem.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'oncallDatabase', #mysql server name
+        'USER': 'root', #mysql server user
+        'PASSWORD': 'computer28', #mysql server password
+        'HOST': '127.0.0.1', #local-ip
+        'PORT': '3306', #mysql server port
     }
 }
+
 
 
 # Internationalization
@@ -116,9 +127,7 @@ USE_TZ = True
 
 STATIC_ROOT = os.path.join(PROJECT_DIR, 'static')
 STATIC_URL = '/static/'
-STATICFILES_DIRS = (
-    ('assets', '/Users/poptart/Documents/python/GCS-On-Call-System/OnCallSystem/static')
-)
+STATICFILES_DIRS = ( os.path.join('static'), )
 
 LOGIN_URL = '/oncall/login/'
 
