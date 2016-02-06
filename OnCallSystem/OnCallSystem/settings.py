@@ -5,7 +5,6 @@ github repository: https://github.com/brendan-kellam/GCS-On-Call-System
 
 Build: Unix v1.0
 Server: mysql
->>>>>>> windowsBuild
 
 Django settings for OnCallSystem project v 1.0
 
